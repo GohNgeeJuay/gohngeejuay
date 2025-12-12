@@ -2,17 +2,17 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/gohngeejuay/posts/solar_toa_influx_analysis/</loc>
+    <loc>https://gohngeejuay.github.io/gohngeejuay/posts/solar_toa_influx_analysis/</loc>
     <lastmod>2025-12-12T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/gohngeejuay/</loc>
+    <loc>https://gohngeejuay.github.io/gohngeejuay/</loc>
     <lastmod>2025-12-12T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/gohngeejuay/posts/</loc>
+    <loc>https://gohngeejuay.github.io/gohngeejuay/posts/</loc>
     <lastmod>2025-12-12T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/gohngeejuay/categories/</loc>
+    <loc>https://gohngeejuay.github.io/gohngeejuay/categories/</loc>
   </url><url>
-    <loc>http://localhost:1313/gohngeejuay/tags/</loc>
+    <loc>https://gohngeejuay.github.io/gohngeejuay/tags/</loc>
   </url>
 </urlset>
