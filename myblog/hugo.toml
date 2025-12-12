@@ -2,6 +2,7 @@ baseURL = 'https://gohngeejuay.github.io/gohngeejuay/'
 languageCode = 'en-us'
 title = 'Jake Goh – Renewable Energy Data Notes'
 theme = "PaperMod"
+canonifyURLs = true
 
 [params]
   description = "Insights from ERA5-Land, geospatial analytics, and data engineering for sustainability."
