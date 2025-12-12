@@ -5,7 +5,8 @@ theme = "PaperMod"
 
 [params]
   description = "Insights from ERA5-Land, geospatial analytics, and data engineering for sustainability."
-
+  preloadCSS = false
+  
   ShowReadingTime = true
   ShowToc = true
   ShowScrollToTop = true
