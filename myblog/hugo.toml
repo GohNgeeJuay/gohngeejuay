@@ -1,0 +1,17 @@
+baseURL = 'https://example.org/'
+languageCode = 'en-us'
+title = 'Jake Goh – Renewable Energy Data Notes'
+theme = "PaperMod"
+
+[params]
+  description = "Insights from ERA5-Land, geospatial analytics, and data engineering for sustainability."
+
+  ShowReadingTime = true
+  ShowToc = true
+  ShowScrollToTop = true
+
+  [params.homeInfoParams]
+    Title = "Renewable Energy Analysis"
+    Content = "I write about what I learn while working at the intersection of renewable energy and data. This blog documents my experiments, insights, and ongoing journey in sustainability analytics."
+
+
