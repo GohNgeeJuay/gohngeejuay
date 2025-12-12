@@ -23,10 +23,10 @@ This project is my attempt to delve into the topic of solar energy modelling. I 
 
 
 1. **Deep-dive into the foundations of solar energy modelling**  
-    I want to learn the what are the different components for solar energy modelling, and how do they interact with each other to provide estimates. 
+    I want to learn the different components for solar energy modelling, and how do they interact with each other to provide estimates. 
 
 2. **Build a robust, transparent, and well-tested pipeline**  
-    There’s a saying: _“It’s better to have no data than the wrong data.”_  
+    There’s a saying that _“It’s better to have no data than the wrong data”_, 
     With that in mind, I’ve invested significant effort into validation and unit testing to ensure that my results are trustable. I would say about 70% to 80% of my time was dedicated to testing and doing exploratory data analysis to make sure my data is sound. 
     
 3. **Enable scalability across time, datasets, and regions**  
@@ -115,7 +115,7 @@ Since the aim of my project is a more practical goal rather than a deep dive int
 
 My goal was just to get a consistent TOA measurement, and ensure that it "make sense" by cross validating with existing datasets like ERA5 dataset. The calculated TOA Influx should also be in the same format expected by tools like Atlite, and this calculation should be reproducible across the dataset. 
 
-I mainly approach this with a data engineering mindset rather than focusing on the solar physics. So I relied on unit testing, sanity checks and visual comparisons rather than any complex validations. This allowed me to produce a TOA dataset that is **scientifically sound, practical, and and reproducible, without over-engineering a component that is meant to be a baseline reference. 
+I mainly approach this with a data engineering mindset rather than focusing on the solar physics. So I relied on unit testing, sanity checks and visual comparisons rather than any complex validations. This allowed me to produce a TOA dataset that is scientifically sound, practical, and and reproducible, without over-engineering a component that is meant to be a baseline reference. 
 
 
 Also, to help narrow the focus, I focused on implementing the formula onto the year of 2022, and focus on Peninsular Malaysia. This is not the full extend to the project, but I did it in such a way so I can focus on a smaller geographical region and time period so that testing can be less daunting and I can extend it further once I am satisfied with the results. 
