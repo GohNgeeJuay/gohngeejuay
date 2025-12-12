@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="auto">
+
+<head><script src="/gohngeejuay/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=gohngeejuay/livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Deep Dive into solar energy modelling | Jake Goh – Renewable Energy Data Notes</title>
+<meta name="keywords" content="">
+<meta name="description" content="An in-depth exploration into Top-of-Atmosphere irradiance in solar energy modelling">
+<meta name="author" content="Jake Goh">
+<link rel="canonical" href="http://localhost:1313/gohngeejuay/posts/solar_toa_influx_analysis/">
+<link crossorigin="anonymous" href="http://localhost:1313/gohngeejuay/assets/css/stylesheet.fd5566c526ae48aadabd950798a2dc3568536401560eae5caac3765a42a9e7b5.css" integrity="sha256-/VVmxSauSKravZUHmKLcNWhTZAFWDq5cqsN2WkKp57U=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/gohngeejuay/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/gohngeejuay/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/gohngeejuay/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/gohngeejuay/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/gohngeejuay/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/gohngeejuay/posts/solar_toa_influx_analysis/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            .list::-webkit-scrollbar-thumb {
+                border-color: var(--code-bg);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/gohngeejuay/" accesskey="h" title="Jake Goh – Renewable Energy Data Notes (Alt + H)">Jake Goh – Renewable Energy Data Notes</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Deep Dive into solar energy modelling
+    </h1>
+    <div class="post-meta"><span title='2025-12-12 00:00:00 +0000 UTC'>December 12, 2025</span>&nbsp;·&nbsp;<span>16 min</span>&nbsp;·&nbsp;<span>Jake Goh</span>
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul><ul>
+                <li>
+                    <a href="#introduction" aria-label="Introduction:">Introduction:</a></li>
+                <li>
+                    <a href="#goals" aria-label="Goals">Goals</a></li>
+                <li>
+                    <a href="#why-start-with-malaysia" aria-label="Why Start With Malaysia?">Why Start With Malaysia?</a></li>
+                <li>
+                    <a href="#problem-statement" aria-label="Problem statement">Problem statement</a></li>
+                <li>
+                    <a href="#solution" aria-label="Solution">Solution</a></li>
+                <li>
+                    <a href="#design" aria-label="Design">Design</a><ul>
+                        
+                <li>
+                    <a href="#1-download-climate-datasets" aria-label="1. Download Climate Datasets">1. Download Climate Datasets</a></li>
+                <li>
+                    <a href="#2-preprocessing" aria-label="2. Preprocessing">2. Preprocessing</a></li>
+                <li>
+                    <a href="#3-toa-influx-calculation" aria-label="3. TOA Influx Calculation">3. TOA Influx Calculation</a></li>
+                <li>
+                    <a href="#4-unit-testing" aria-label="4. Unit Testing">4. Unit Testing</a></li>
+                <li>
+                    <a href="#5-validation-and-sanity-checks" aria-label="5. Validation and Sanity Checks">5. Validation and Sanity Checks</a><ul>
+                        
+                <li>
+                    <a href="#how-the-metrics-were-computed" aria-label="How the metrics were computed">How the metrics were computed</a></li>
+                <li>
+                    <a href="#interpretation" aria-label="Interpretation">Interpretation</a></li></ul>
+                </li>
+                <li>
+                    <a href="#6-atlite-integration" aria-label="6. Atlite Integration">6. Atlite Integration</a></li>
+                <li>
+                    <a href="#7-surface-solar-energy-output" aria-label="7. Surface Solar Energy Output">7. Surface Solar Energy Output</a></li></ul>
+                </li></ul>
+                    
+                <li>
+                    <a href="#resources" aria-label="Resources">Resources</a></li>
+                <li>
+                    <a href="#conclusion-and-reflection" aria-label="Conclusion and Reflection">Conclusion and Reflection</a><ul>
+                        <ul>
+                        
+                <li>
+                    <a href="#contact-info" aria-label="Contact info">Contact info</a>
+                </li>
+            </ul>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><h2 id="introduction">Introduction:<a hidden class="anchor" aria-hidden="true" href="#introduction">#</a></h2>
+<p>One of the reasons I’m fascinated by data is its ability to illuminate the natural world and help us understand complex, real-world phenomena. Renewable energy is one of those domains where data is not just interesting, it can help us understand abstract environment variables and gives us insight that can shape our decisions for the future.</p>
+<p>One area that particularly interests me is understanding how <strong>climate data can be translated into actual, measurable energy potential</strong>. While projects like <strong>Atlite</strong> already offer powerful tools for large-scale renewable energy modelling, I wanted to explore the fundamentals myself and build something from the ground up. Doing so gives me the chance to understand how climate modelling is done.</p>
+<p>This project is my attempt to delve into the topic of solar energy modelling. I aim to <strong>understand, reconstruct, and validate</strong> the core steps behind <strong>solar energy modelling</strong> using publicly available climate datasets. I would like to preface this in saying that I&rsquo;m by no means an expert in climate or renewable energy modelling, and I am approaching this from a more data engineering/analytics perspective.</p>
+<hr>
+<h2 id="goals"><strong>Goals</strong><a hidden class="anchor" aria-hidden="true" href="#goals">#</a></h2>
+<ol>
+<li>
+<p><strong>Deep-dive into the foundations of solar energy modelling</strong><br>
+I want to learn the what are the different components for solar energy modelling, and how do they interact with each other to provide estimates.</p>
+</li>
+<li>
+<p><strong>Build a robust, transparent, and well-tested pipeline</strong><br>
+There’s a saying: <em>“It’s better to have no data than the wrong data.”</em><br>
+With that in mind, I’ve invested significant effort into validation and unit testing to ensure that my results are trustable. I would say about 70% to 80% of my time was dedicated to testing and doing exploratory data analysis to make sure my data is sound.</p>
+</li>
+<li>
+<p><strong>Enable scalability across time, datasets, and regions</strong><br>
+The long-term vision is to support wider spatial regions, and longer time periods — with the possibility of extending the pipeline for forecasting and integration with Atlite.</p>
+</li>
+</ol>
+<hr>
+<h2 id="why-start-with-malaysia"><strong>Why Start With Malaysia?</strong><a hidden class="anchor" aria-hidden="true" href="#why-start-with-malaysia">#</a></h2>
+<p>Malaysia provides a compelling starting point for this work. In 2023, Malaysia introduced the <strong>National Energy Transition Roadmap (NETR)</strong>, which outlines the country’s pathway toward achieving <strong>net-zero emissions by 2050</strong>. Solar energy is envisioned to play a major role, given Malaysia&rsquo;s solar potential of about 269 GW, although only a small fraction of this is realized. Some of NETR goals are:</p>
+<ul>
+<li>
+<p>scaling up large-scale solar (LSS) installations,</p>
+</li>
+<li>
+<p>achieving over <strong>40% renewable energy share in the national power mix by 2035</strong>, and</p>
+</li>
+<li>
+<p>achieving 70% RE share of installed capacity by 2050, predominantly driven by solar PV installation.</p>
+</li>
+</ul>
+<p>I did some research to find datasets that can provide insights into the following:</p>
+<ul>
+<li>
+<p>which regions of Malaysia receive the most sunlight,</p>
+</li>
+<li>
+<p>and how these patterns might translate into solar PV potential.</p>
+</li>
+</ul>
+<p>This would allow us to understand and plan in which regions we should concentrate our efforts to harness solar energy.</p>
+<p>My goal is to gather the necessary data and build the methodology needed to begin answering these questions, starting from the first principles rather than relying on existing tools. By doing so, I would get a solid foundation in understanding solar energy modelling.</p>
+<h2 id="problem-statement">Problem statement<a hidden class="anchor" aria-hidden="true" href="#problem-statement">#</a></h2>
+<p>For this project, I evaluated widely used climate datasets such as <strong>SARAH (Surface Solar Radiation), ERA5</strong>, and <strong>ERA5-Land</strong>.</p>
+<p>SARAH have a high spatial resolution (<strong>~0.05°</strong>, ~5 km), but mostly the coverage is focused on Europe and Africa. There is no coverage in this part of the world, which means this dataset is not usable.</p>
+<p><img alt="SARAH" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/SARAH.png"></p>
+<p>ERA5 seems like a good choice since it has global coverage and it has many climate variables such as irradiation, temperature, wind, humidity, etc. The issue is it&rsquo;s resolution is  (~0.25°, ~31 km grid). This spatial resolution is too coarse for this project.</p>
+<p>ERA5-Land is based on ERA5 but it is running on an enhanced spatial resolution (~0.1°, ≈ 9 km). Overall, this would be a good pick because it has the required coverage in Malaysia and the variables needed. It is also compatible with Atlite pipeline to estimate solar energy potential, and this dataset was picked as the main dataset. Below, you can see a comparison of a selected variable and the granularity.</p>
+<p><img alt="ERA5_Comparisons" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/ERA5_Comparisons.png"></p>
+<h2 id="solution">Solution<a hidden class="anchor" aria-hidden="true" href="#solution">#</a></h2>
+<p>For some background, solar radiation is the energy coming from the sun into the space in the form of electromagnetic waves, mainly visible light and shortwave radiation. This energy is the source of electricity in the solar PV systems. There are 2 categories of solar radiation that we are concerned with:</p>
+<p><strong>Top of Atmosphere.</strong>
+This is the amount of radiation arriving just outside the atmosphere. It is affected by the geometry of the earth and its relation to the sun. Factors affecting it is only geometrical:</p>
+<ol>
+<li>Latitude</li>
+<li>Date and time during the year</li>
+<li>Solar position in relation to the earth</li>
+<li>Earth-sun distance.</li>
+</ol>
+<p><strong>At the surface</strong>
+This is the amount of radiation that actually reaches the ground after passing through cloud, water vapor, dust, atmospheric gases, etc. This is what is received by the solar panels, and it can vary a lot based on the climate and weather.</p>
+<p>ERA5_Land provides variables describing the radiation at the surface such as Surface net short-wave (solar) radiation (SSRD) which describes the amount of solar radiation that reaches a horizontal plane on the surface of the Earth after reflected passing through atmosphere.</p>
+<p>Since I wanted to delve deeper into solar energy modelling, I calculated the TOA-influx from scratch. TOA influx is the physical upper bound for all solar radiation values since it is radiation before passing through the atmosphere. Because TOA irradiance is determined purely by solar geometry and physics, it served as an independent benchmark to compare against ERA5-Land’s modeled surface radiation measurements which applied many other variables on the incoming TOA radiation.</p>
+<p><strong>How to calculate TOA Influx.</strong></p>
+<p>Here is the formula to calculate TOA Influx. Note that the formula is strictly geometrical, and no other variables are included in the formula.
+<img alt="Formula_1" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Formula_1.png">
+<img alt="Formula_2" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Formula_2.png">
+<img alt="Formula_3" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Formula_3.png"></p>
+<p>Since the aim of my project is a more practical goal rather than a deep dive into solar geometry research, I did not delve too much into the details.</p>
+<p>My goal was just to get a consistent TOA measurement, and ensure that it &ldquo;make sense&rdquo; by cross validating with existing datasets like ERA5 dataset. The calculated TOA Influx should also be in the same format expected by tools like Atlite, and this calculation should be reproducible across the dataset.</p>
+<p>I mainly approach this with a data engineering mindset rather than focusing on the solar physics. So I relied on unit testing, sanity checks and visual comparisons rather than any complex validations. This allowed me to produce a TOA dataset that is **scientifically sound, practical, and and reproducible, without over-engineering a component that is meant to be a baseline reference.</p>
+<p>Also, to help narrow the focus, I focused on implementing the formula onto the year of 2022, and focus on Peninsular Malaysia. This is not the full extend to the project, but I did it in such a way so I can focus on a smaller geographical region and time period so that testing can be less daunting and I can extend it further once I am satisfied with the results.</p>
+<h2 id="design">Design<a hidden class="anchor" aria-hidden="true" href="#design">#</a></h2>
+<p><img alt="Design_flowchart" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Design_flowchart.png"></p>
+<h3 id="1-download-climate-datasets"><strong>1. Download Climate Datasets</strong><a hidden class="anchor" aria-hidden="true" href="#1-download-climate-datasets">#</a></h3>
+<p>The workflow begins with obtaining the required climate reanalysis data from <strong>ERA5-Land</strong> and ERA5 using the Copernicus API via CDS. I will be adding the new calculation on top of ERA5-Land, and using the ERA5 as to cross validate since it also have a variable that measures the top-of-atmosphere radiation.</p>
+<p>How I did this was using the CDSAPI library, which is a python library that allows users to programmatically access the Copernicus Climate Data Store. Below is an example code that request for multiple months of data from the API, and specifying what data variables I need, data format, area of interest and other variables.</p>
+<p><img alt="API_download" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/API_download.png"></p>
+<h3 id="2-preprocessing"><strong>2. Preprocessing</strong><a hidden class="anchor" aria-hidden="true" href="#2-preprocessing">#</a></h3>
+<p>The next step was to perform preprocessing step so that I will get a clean and analysis-ready dataset that I can use. Since Atlite uses Xarray as the library of choice for the processing of data, my goal was to get the downloaded data into a format that can be used by Xarray.</p>
+<p>Xarray is kind of like the more popular Pandas, but I find it significantly more intuitive to use. It is particularly useful for multi-dimensional data such as for physics, astronomy, bioinformatics and geoscience.</p>
+<p>Some of the steps taken is to combine the monthly files into a single data file, zipping, renaming and other standard data processing steps. An example is below. Note than the resulting variable is a valid Xarray Dataset.</p>
+<p><img alt="Preprocessing" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Preprocessing.png"></p>
+<h3 id="3-toa-influx-calculation"><strong>3. TOA Influx Calculation</strong><a hidden class="anchor" aria-hidden="true" href="#3-toa-influx-calculation">#</a></h3>
+<p>ERA5-Land does not provide Top-of-Atmosphere (TOA) irradiance, so this value must be calculated manually. I have implemented the formula as mentioned in the previous section. Each function is separated which allows for easier testing and debugging.</p>
+<p>An example is below. I have separated the complex formula into simple functions such as to calculate solar zenith angle, hour angle, etc. Note that at the last function (calc_toa_incident_shortwave), there is a new variable representing TOA influx calculated. This new variable is calculated for every grid cell and timestamp.
+<img alt="TOA_calculation" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/TOA_calculation.png"></p>
+<h3 id="4-unit-testing"><strong>4. Unit Testing</strong><a hidden class="anchor" aria-hidden="true" href="#4-unit-testing">#</a></h3>
+<p>Because this project involves custom scientific calculations, unit tests are essential for maintaining correctness and reproducibility. For example, tests include:</p>
+<ul>
+<li>
+<p>Verifying nighttime TOA values drop to zero</p>
+</li>
+<li>
+<p>Ensuring solar zenith angle (the angle between the sun&rsquo;s position and the vertical directly overhead) is 0 degrees when directly overhead and 90 degrees when it is at the horizon.</p>
+</li>
+</ul>
+<p><img alt="SZA" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/SZA.png"></p>
+<p>I have implemented the test using Pytest. Each function that I created in the previous section is tested against expected values based on physics and solar geometry. Below is an example:</p>
+<p><img alt="Pytest_code" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Pytest_code.png"></p>
+<p>This is how I run all of my tests:
+<img alt="Pytest_run" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Pytest_run.png"></p>
+<h3 id="5-validation-and-sanity-checks"><strong>5. Validation and Sanity Checks</strong><a hidden class="anchor" aria-hidden="true" href="#5-validation-and-sanity-checks">#</a></h3>
+<p>Beyond verifying that each function behaves correctly, I also validate the results from a broader perspective. This involves formulating simple questions about how the data <em>should</em> behave. I employ simple data visualizations such as time series plots or spatial maps to confirm that the outputs are logical.</p>
+<p>Whenever a chart reveals something unexpected, I trace the issue back to the relevant function, make corrections, and rerun the checks. This iterative process took time, but it ensured that the final dataset behaves consistently and aligns with known solar patterns.</p>
+<p>To keep this section focused and readable, I present only the <em>corrected</em> charts and interpretations rather than documenting every bug or error.</p>
+<hr>
+<p>Here are some questions:</p>
+<ol>
+<li><strong>Surface level check: I have calculated the TOA irradiance values for each grid cell, but do they seem correct?</strong></li>
+</ol>
+<p>After computing TOA irradiance for every grid cell, the first check was a simple visual sanity check: <em>Do the values follow expected solar behaviour?</em><br>
+For example, irradiance should peak around local noon, drop to zero at night, and vary smoothly across neighbouring grid cells. Any abrupt spikes or physically impossible values (e.g., negative irradiance) would immediately indicate an error.</p>
+<p>For this, I selected a particular date and plotted a choropleth for a few hours in the day. The resulting image below shows the TOA influx/irradiance values per grid cell at the time 8am, 12pm, 4pm and 8pm local time in the first of January 2022. This seems good as the trend is what I was expecting. The TOA influx grows in the morning, peaks around noon and falls in the evening. The values also vary smoothly across neighboring cells, and we do not see any weird banding or missing values.</p>
+<p>Note that the values for the different hours are using different scales, which does not allow us to make direct comparisons of values across time. We shall do this in the next question.
+<img alt="Spatial_validation" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Spatial_validation.png"></p>
+<hr>
+<ol start="2">
+<li><strong>Does a selected grid cell match ERA5 when compared directly?</strong><br>
+ERA5-Land does not natively provide TOA irradiance, so I used ERA5 (which <em>does</em> include TOA) as the benchmark.<br>
+For any specific latitude–longitude point, the calculated ERA5-Land-based TOA values should align closely with the ERA5 equivalent, with no major structural differences. We are expecting the irradiance to grow in the morning, peak at noon and fall in the evening. The trends and daily cycles should overlap between the two datasets.</li>
+</ol>
+<p>What I did here was to pick a random latitude and longitude (3.13 and 101.58), and plotted the hourly TOA influx from both datasets.</p>
+<p><img alt="Temporal_validation" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Temporal_validation.png"></p>
+<p>This looks good! The daily trend seem to match and we are seeing the bell shape at every day.</p>
+<p>But we can see that for the same date and hour, our calculated values are higher than the ERA5 TISR. It seems like our calculations are &ldquo;predicting ahead&rdquo;.</p>
+<p>This happens because of how ERA5 defines accumulated fields like <strong>TISR</strong>.<br>
+<strong>TISR is an accumulated value over the hour <em>ending</em> at the timestamp</strong>.<br>
+So, for example:</p>
+<ul>
+<li>
+<p><strong>ERA5 TISR at 2022-01-01 08:00</strong> represents the <em>total TOA radiation from 07:00 → 08:00</em>.</p>
+</li>
+<li>
+<p><strong>Our calculated TOA influx at 08:00</strong> represents the <em>incoming radiation for the next hour, 08:00 → 09:00</em>.</p>
+</li>
+</ul>
+<p><em>Note: It is important to note that our method assumes the sun–Earth geometry (e.g., solar declination, and solar zenith angle) is fixed over that one-hour interval. In reality, these parameters change continuously throughout the day. However, the variation within a single hour is extremely small, so this approximation introduces negligible error—and as shown above, our calculated values still match the ERA5 baseline very closely.</em></p>
+<p>Since the two values refer to <em>different 1-hour periods</em>, our series appears shifted forward relative to ERA5.</p>
+<p>Another question might arise:</p>
+<p>Why are the accumulated TOA influx values roughly the same even though ERA5 and ERA5-Land have very different grid sizes?</p>
+<p>This is because both datasets report TOA shortwave radiation in <strong>J/m²</strong>.<br>
+This unit represents <em>energy per unit area</em>. The physical grid-cell size does not affect the value, because the energy is already normalized per square metre.</p>
+<p>So even though ERA5 grid cells are much larger than ERA5-Land cells, the accumulated irradiance per m² should be the same (aside from small interpolation differences), since TOA radiation is a function of solar geometry, not spatial resolution.</p>
+<hr>
+<ol start="3">
+<li><strong>Do monthly totals agree between ERA5 and ERA5-Land?</strong><br>
+While hourly values may differ slightly, <em>aggregate behaviour</em> should remain consistent.</li>
+</ol>
+<p>To check whether both datasets behave consistently at a broader scale, I aggregated the hourly TOA irradiance into <strong>monthly totals</strong> and then computed the <strong>average monthly total</strong> for each grid cell. This gives a spatial map of how much TOA energy a location typically receives over a month.</p>
+<p><img alt="Monthly_totals" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Monthly_totals.png"></p>
+<p>The plots show that the values for both datasets are very close. They have similar spatial patterns with the southern region of Peninsular Malaysia having slightly higher irradiance than the north.</p>
+<p>Although the ERA5 TISR values are slightly higher overall, this difference is very small and consistent throughout the region. Keeping in mind that this is the monthly accumulated totals, even small hourly mismatch can compound. Therefore, this small positive bias is not a source of concern due to the methodological difference between our simpler TOA model with ERA5 model.</p>
+<hr>
+<ol start="4">
+<li>To quantify agreement, I computed standard error metrics such as RMSE, MAE, MBE, NRMSE, NMAE, and correlation (R).<br>
+In general:</li>
+</ol>
+<ul>
+<li>
+<p><strong>Root Mean Square Error (RMSE) / Mean Absolute Error (MAE)</strong>: This measures the absolute errors between predicted values and actual values. The lower the better; calculated values should be small relative to the mean irradiance.</p>
+</li>
+<li>
+<p><strong>Mean Bias Error (MBE)</strong>: This measures the average difference between forecasted values with actual values. This should be close to zero (indicating no systematic over- or underestimation).</p>
+</li>
+<li>
+<p><strong>Normalized Root Mean Square Error (NRMSE) / Normalized Mean Absolute Error (NMAE)</strong>: This values is the same as RMSE and MAE but it is standardized by the range of the data. This would make it less scale-independent and comparable across different units and magnitudes. It should ideally be below 10–20% for climate-physics variables.</p>
+</li>
+<li>
+<p><strong>Correlation (R)</strong>: should be very high (typically &gt;0.95) because TOA radiation is deterministic and geometry-driven.</p>
+</li>
+</ul>
+<p>These metrics help confirm that the calculated values are not only visually plausible but also numerically consistent with an established reference dataset.</p>
+<h4 id="how-the-metrics-were-computed"><em><strong>How the metrics were computed</strong></em><a hidden class="anchor" aria-hidden="true" href="#how-the-metrics-were-computed">#</a></h4>
+<p>Because ERA5 and ERA5-Land have different spatial resolutions, I first <strong>reindexed the ERA5-Land dataset onto the ERA5 grid</strong>. This ensures that:</p>
+<ul>
+<li>
+<p>every ERA5-Land grid cell is aligned with the nearest ERA5 cell,</p>
+</li>
+<li>
+<p>both datasets share the same latitude/longitude coordinates,</p>
+</li>
+<li>
+<p>point-to-point comparisons are meaningful.</p>
+</li>
+</ul>
+<p>After aligning the grids, each metric was computed by comparing:</p>
+<blockquote>
+<p><strong>Each grid cell in ERA5-Land vs. the corresponding cell in ERA5, across all hourly timesteps.</strong></p>
+</blockquote>
+<p>This means the statistics reflect <strong>spatio-temporal error</strong>, not just a single location or a single time slice. It’s effectively a full-dataset consistency check.</p>
+<p>Here is how the grid sizes look like for both datasets after reindexing.
+<img alt="Reindexing_ERA5" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Reindexing_ERA5.png"></p>
+<p><img alt="Reindexing_ERA5_Land" loading="lazy" src="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/Reindexing_ERA5_Land.png"></p>
+<p>Now I calculated the values for each cell against the same cell and across time. Here are the results:</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Metric</th>
+          <th style="text-align: right">Value</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">RMSE</td>
+          <td style="text-align: right">302553.81</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">MAE</td>
+          <td style="text-align: right">195104.71</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">MBE</td>
+          <td style="text-align: right">3144.27</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">NRMSE</td>
+          <td style="text-align: right">0.0615</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">NMAE</td>
+          <td style="text-align: right">0.0396</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">R</td>
+          <td style="text-align: right">0.986</td>
+      </tr>
+  </tbody>
+</table>
+<h4 id="interpretation"><em><strong>Interpretation</strong></em><a hidden class="anchor" aria-hidden="true" href="#interpretation">#</a></h4>
+<ul>
+<li>
+<p><strong>The RMSE and MAE values are small relative to the typical daily TOA peak (~4–5×10⁶ J/m²).</strong><br>
+This indicates that absolute deviations remain modest.</p>
+</li>
+<li>
+<p><strong>MBE is close to zero (relative to the magnitude of the data)</strong>. The peak TOA value is 4 to 5  million J/m² while this is around 3144 J/m² which is less than 1%. This means  the method does not introduce any meaningful systematic bias—no consistent “overprediction” or “underprediction.”</p>
+</li>
+<li>
+<p><strong>NRMSE (~6%) and NMAE (~4%)</strong> are well within the acceptable range for climate-physics variables, especially when comparing datasets with slightly different handling of solar accumulation windows.</p>
+</li>
+<li>
+<p><strong>Correlation (R ≈ 0.986)</strong> is extremely high, confirming that the temporal patterns—sunrise timing, peak irradiance, seasonal behaviour—are captured almost perfectly.<br>
+This is expected, since TOA geometry is deterministic, but it provides strong validation that the implementation is correct.</p>
+</li>
+</ul>
+<p>Overall, the statistical results strongly support that the implementation of TOA influx is both <strong>physically consistent</strong> as validated by the above charts and <strong>numerically robust</strong>.</p>
+<hr>
+<h3 id="6-atlite-integration"><strong>6. Atlite Integration</strong><a hidden class="anchor" aria-hidden="true" href="#6-atlite-integration">#</a></h3>
+<p>Once the dataset is validated, the next step is to integrate it into <strong>Atlite</strong>, a Python-based framework widely used for renewable energy modelling. So far, this project computes the <strong>top-of-atmosphere (TOA) irradiance</strong> which is the incoming solar energy before it interacts with the atmosphere. However, as discussed earlier, the solar energy that actually reaches the ground is significantly reduced and modified by atmospheric effects such as clouds, aerosols, water vapour, and scattering.</p>
+<p>By integrating this dataset with Atlite, the pipeline can incorporate these additional atmospheric and surface variables (from ERA5-Land or other sources), allowing Atlite to compute <strong>surface-level solar potential</strong> rather than TOA-only values. This bridges the gap between theoretical extraterrestrial irradiance and the realistic solar energy available for photovoltaic modelling.</p>
+<p>What it might involve:</p>
+<ul>
+<li>
+<p>Mapping ERA5-Land variables to Atlite’s expected variable names, dimensions, and format.</p>
+</li>
+<li>
+<p>Registering the custom dataset with Atlite’s data interface so that it behaves like other existing datasets like ERA5, SARAH, etc that are supported by the library</p>
+</li>
+<li>
+<p>Connecting the current functions into Atlite&rsquo;s existing workflow</p>
+</li>
+<li>
+<p>Verifying the workflow produces correct results across different locations and time ranges.</p>
+</li>
+</ul>
+<h3 id="7-surface-solar-energy-output"><strong>7. Surface Solar Energy Output</strong><a hidden class="anchor" aria-hidden="true" href="#7-surface-solar-energy-output">#</a></h3>
+<p>The output of the Atlite will consist of <strong>spatially explicit, hourly PV potential values</strong>, which can support downstream use cases such as:</p>
+<ul>
+<li>
+<p>PV site selection - to identify high-yield solar farm development</p>
+</li>
+<li>
+<p>Renewable-energy planning - supporting long-term resource assessment and policy planning.</p>
+</li>
+<li>
+<p>Energy system modelling   - integrating realistic solar energy estimation into power system simulation.</p>
+</li>
+</ul>
+<p>This workflow will help to bridge the gap between climate datasets and practical insights for the renewable energy sector.</p>
+<h1 id="resources">Resources<a hidden class="anchor" aria-hidden="true" href="#resources">#</a></h1>
+<p>If you would like to view the jupyter notebook output, you can view them here:</p>
+<ol>
+<li>Download script: <a href="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/download_data.html">TOA_influx</a></li>
+<li>EDA script: <a href="http://localhost:1313/gohngeejuay/notebooks/solar_toa_influx_analysis/toa_influx.html">TOA_influx</a></li>
+</ol>
+<p>To view the full code including the data, notebooks, functions and tests, click here: <a href="https://github.com/GohNgeeJuay/TOA_Influx_Analysis">https://github.com/GohNgeeJuay/TOA_Influx_Analysis</a>.</p>
+<h1 id="conclusion-and-reflection">Conclusion and Reflection<a hidden class="anchor" aria-hidden="true" href="#conclusion-and-reflection">#</a></h1>
+<p>This project has gone through several rounds of validation and experimentation and I have reached a milestone where I feel confident enough to share the work more broadly. While I am committed to produce quality result, I am also balancing my thoroughness with iterative progress.</p>
+<p>There is still plenty of room to improve, and optimize. I thank you for reaching the end, and I welcome any feedback or questions that you have.</p>
+<h3 id="contact-info">Contact info<a hidden class="anchor" aria-hidden="true" href="#contact-info">#</a></h3>
+<p>You can reach me via GitHub: <a href="https://github.com/gohngeejuay">https://github.com/gohngeejuay</a></p>
+<p>Or linkedin: <a href="https://www.linkedin.com/in/gohngeejuay">www.linkedin.com/in/gohngeejuay</a></p>
+<p>This repository is licensed under the <a href="LICENSE">CC BY 4.0</a> license.</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="http://localhost:1313/gohngeejuay/">Jake Goh – Renewable Energy Data Notes</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
