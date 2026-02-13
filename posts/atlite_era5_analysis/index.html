@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Atlite with ERA5-Land | Jake Goh – Renewable Energy Data Notes</title>
+<meta name="keywords" content="">
+<meta name="description" content="Using Atlite with higher resolution ERA5-Land dataset">
+<meta name="author" content="Jake Goh">
+<link rel="canonical" href="https://gohngeejuay.github.io/gohngeejuay/posts/atlite_era5_analysis/">
+<link crossorigin="anonymous" href="https://gohngeejuay.github.io/gohngeejuay/assets/css/stylesheet.fd5566c526ae48aadabd950798a2dc3568536401560eae5caac3765a42a9e7b5.css" integrity="sha256-/VVmxSauSKravZUHmKLcNWhTZAFWDq5cqsN2WkKp57U=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://gohngeejuay.github.io/gohngeejuay/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://gohngeejuay.github.io/gohngeejuay/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://gohngeejuay.github.io/gohngeejuay/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://gohngeejuay.github.io/gohngeejuay/apple-touch-icon.png">
+<link rel="mask-icon" href="https://gohngeejuay.github.io/gohngeejuay/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="https://gohngeejuay.github.io/gohngeejuay/posts/atlite_era5_analysis/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            .list::-webkit-scrollbar-thumb {
+                border-color: var(--code-bg);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><meta property="og:url" content="https://gohngeejuay.github.io/gohngeejuay/posts/atlite_era5_analysis/">
+  <meta property="og:site_name" content="Jake Goh – Renewable Energy Data Notes">
+  <meta property="og:title" content="Atlite with ERA5-Land">
+  <meta property="og:description" content="Using Atlite with higher resolution ERA5-Land dataset">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-02-13T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-02-13T00:00:00+00:00">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Atlite with ERA5-Land">
+<meta name="twitter:description" content="Using Atlite with higher resolution ERA5-Land dataset">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://gohngeejuay.github.io/gohngeejuay/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Atlite with ERA5-Land",
+      "item": "https://gohngeejuay.github.io/gohngeejuay/posts/atlite_era5_analysis/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Atlite with ERA5-Land",
+  "name": "Atlite with ERA5-Land",
+  "description": "Using Atlite with higher resolution ERA5-Land dataset",
+  "keywords": [
+    
+  ],
+  "articleBody": "Introduction In my previous blog post, I established why I was using ERA5-Land instead of the ERA5 dataset. This was because I wanted to get higher resolution in terms of PV potentials in Malaysia, which was lacking in existing datasets. The ERA5 dataset provides ~31 km grid resolution, which is already good, but I wanted to get even more granular data. Using the ERA5-Land dataset, it can provide detail up to ~9 km spatial resolution.\nHowever, this posed a challenge since Atlite requires solar irradiance inputs (especially Global Horizontal Irradiance, GHI, and the top-of-atmosphere solar radiation used for irradiance decomposition) for PV calculation. ERA5-Land does not provide the same set of irradiance variables that Atlite’s ERA5 workflow expects (such as direct solar radiation at the surface). Because of this, I had to calculate the Top of Atmosphere (TOA) solar influx manually to enable Atlite’s PV pipeline to work correctly. I spent time analysing and validating that the calculated TOA influx behaves as expected and is physically reasonable.\nThis blog posts explains on a high-level what has been done to integrate the ERA5-Land dataset with Atlite, such that I can generate PV potential estimates for Malaysia using higher-resolution reanalysis data.\nGoals Integrate ERA5-Land into Atlite\nContext: Atlite already supports a few climate datasets such as ERA5, SARAH, and GEBCO, and provides a clean workflow for downloading, preparing, and converting climate data into renewable energy potential estimates.\nTo extend Atlite so that ERA5-Land becomes a supported dataset option.\nUse Atlite to generate PV potential in Malaysia\nAfter integration, use Atlite to generate PV potential across Malaysia at ERA5-Land’s higher spatial resolution (~9 km).\nTo run this consistently across multiple years (2020–2025) to enable year-to-year comparison.\nAnalyse and validate the PV results\nTo compare ERA5-Land outputs against Atlite’s existing ERA5 pipeline to confirm that the higher-resolution data produces more granular spatial patterns.\nTo run sanity checks (ranges, spatial consistency, expected regional trends) to ensure the results are physically reasonable.\nDesign In this blog post, I will explain the Atlite integration using the previous data processing. Subsequently, use the newly supported dataset to make predictions of potential solar energy output.\nProcedure 1. Add ERA5-Land as a new dataset option in Atlite I created a new dataset module specifically for ERA5-Land using Atlite’s existing ERA5 dataset module as a reference. I reused the same structure, functions and conventions to match the same interface as the ERA5 module. Atlite expects supported datasets to be able to implement certain functions such as download functions, data sanitisation functions and so on.\nThe main goal is to ensure that my ERA5-Land module also implements the interface, and it behaves like another supported dataset inside Atlite. This means it should be able to download climate data, load it into Xarray, and return variables in the format Atlite expects.\n2. Make ERA5-Land consistent with Atlite’s internal conventions ERA5-Land variables follow ECMWF/CDS naming conventions such as fdir, ssrd, and tisr. Atlite, however, expects consistent internal names across all datasets. I needed to rename variables, convert units where necessary, and ensure the coordinates and dimensions match Atlite’s standards. This step is important because most of Atlite’s PV pipeline assumes these names and formats exist.\n3. Check what the PV pipeline needs and fill in missing inputs Atlite’s PV model needs two main types of climate inputs: solar radiation (to estimate how much sunlight reaches a solar panel) and temperature (to account for efficiency losses when panels heat up). ERA5-Land provides both surface solar radiation downwards (SSRD) and 2m temperature (t2m), so at first glance it looks like we already have what we need.\nHowever, Atlite needs to know not just how much sunlight reaches the ground in total, but also how much of it comes as direct sun versus diffuse light (sunlight scattered by clouds and the atmosphere). With the standard ERA5 dataset, this split is easy because the dataset already includes both the total sunlight at the surface and the direct portion, so the diffuse portion can be derived as “total minus direct”. ERA5-Land does not provide the direct component, so I had to compute the missing top-of-atmosphere solar input and let Atlite’s built-in model estimate the direct vs diffuse split from there. This was done in the previous analysis and shown in the previous blog article.\nWith this calculation, Atlite can now run its PV pipeline end-to-end using ERA5-Land even without the extra radiation variables that ERA5 provides.\n4. Register ERA5-Land so it becomes selectable in Atlite After the dataset module worked, I added it into Atlite’s dataset registry. Atlite keeps a record of all supported dataset in a file, and this step is what makes Cutout(module=\"era5_land\") possible. Without this, the module exists in code but cannot be used through the normal Atlite workflow such as end-to-end PV estimation.\n5. Run an end-to-end PV calculation and validate the results Finally, I ran Atlite’s full PV pipeline using ERA5-Land cutouts for Malaysia. I verified that the workflow runs without manual fixes and produces reasonable results. This step creates a dataset with the PV potentials that I can use to perform analysis.\nResults 1. Does the new dataset improve data resolution? The difference in spatial resolution is immediately visible. The ERA5 result (left) looks blocky, with clear grid-like boundaries between neighbouring cells. In contrast, ERA5-Land (right) produces a much smoother surface with finer spatial detail.\nThis achieves the primary objective behind the project: to produce higher-resolution PV estimates for Malaysia. With ERA5-Land’s smaller grid cells, the PV potential map becomes much more useful for real-world decision making. For example, it enables:\nbetter identification of local PV hotspots\nmore realistic comparisons between nearby regions\nimproved state-level and district-level analysis\nstronger inputs for site screening and feasibility studies\n2. Does this match existing analysis? As a quick sanity check, the PV yields produced by Atlite fall within a realistic range. If we take the annual PV prediction (in kWh/kWp/year) and convert it into an average daily yield, we get:\n1250 kWh/kWp/year → ~3.4 kWh/kWp/day\n1500 kWh/kWp/year → ~4.1 kWh/kWp/day\nThese values are reasonable for Malaysia’s tropical climate, where solar resources are generally strong but moderated by frequent cloud cover and seasonal rainfall.\nTo validate this further, I cross-referenced the results against an independent source ( https://www.solarsunyield.com/latestnews/nid/167598/) summarising PV yield trends across Malaysia. The reported daily and yearly yields fall within the same range, and the regional patterns are consistent with what my results have shown, with northern and central regions generally performing better than the southern peninsula and East Malaysia.\nThis source also uses the Global Solar Atlas, which provides a global summary of PV potential. While the Global Solar Atlas uses its own modelling assumptions and input datasets, the overall magnitude and geographical trends align well with my output, giving additional confidence that the ERA5-Land integration with Atlite is producing sensible PV estimates.\nMy map: As you can see the values from my PV prediction aligns with the geographical trends and the daily trends from the referenced sources.\n3. Which states in Malaysia are optimal for solar farms? This chart shows the average annual PV yield in each state, measured in kWh/kWp (which means the amount of kWh of electricity you can generate in a year for every 1 kW of solar panel installed). The kWp is the maximum theoretical output that can be produced under ideal test conditions (1000 W/m squared solar radiation, 25 degrees Celsius), which is very much different from actual real-life implementation.\nTo make the results easier to interpret, I aggregated the PV estimates by state and compared the average yearly yield across each state.\nBased on the bar chart above (sorted by yearly mean PV yield), the northern states such as Perlis, Pulau Pinang, and Kedah consistently rank among the highest. Central regions such as Selangor, Putrajaya, Kuala Lumpur, and Melaka also show strong PV potential.\nOn the other end of the spectrum, Johor and Sarawak have the lowest predicted PV yield, which may reflect regional differences in cloud cover and rainfall patterns.\nOverall, most states fall within a relatively narrow band of roughly 1300 to 1500 kWh/kWp per year. For context, this is generally higher than many parts of Europe (where values around ~900–1200 kWh/kWp/year are common), and is comparable to strong solar regions such as parts of Southern Europe, Australia, and the southwestern United States. This reinforces that Malaysia has broadly strong solar conditions.\nFuture work Here are some limitations of the analysis:\nThe results above show how much energy (in kWh) could be generated in a year if we assume 1 kW of installed PV capacity in every grid cell. In other words, this is a resource potential map. It describes how good the solar conditions are, but it does not assume how much solar capacity is actually built today. Because of this, we cannot draw conclusions about the performance of Malaysia’s existing solar farms, or how closely current deployment aligns with the highest-potential regions.\nAlso, many areas are not feasible for large-scale PV deployment. Some locations may be constrained by land use and zoning rules, dense urban development, steep terrain, protected forests, wetlands, or simply lack of grid access. These constraints mean that high potential does not automatically translate into buildable capacity.\nFor future work, I plan to extend the analysis into these directions:\nFirstly, I want to introduce land-use and feasibility filtering so that the results focus on areas where PV is realistically buildable. Secondly, I want to incorporate datasets that describe where solar farms have already been built so that the PV estimates can be linked to real deployment patterns. If possible, I also want to obtain historical electricity generation data, so that the Atlite results can be cross-validated against real-world output. These additions would make the model more grounded and provide significantly more confidence in the PV estimates.\nI may also open a PR to contribute this ERA5-Land integration back into Atlite. Before doing so, I want to spend more time aligning the implementation with Atlite’s conventions, improving test coverage, and documenting the dataset assumptions. Depending on the scope expected by the maintainers, I may also extend the module beyond PV to support additional features such as wind-related variables.\nConclusion and Reflection This project is a rewarding culmination of several months of work, and I’m glad to have achieved my main goal of producing a high-resolution PV estimate for Malaysia.\nFurther work will determine how well these estimates hold up against real-world deployment and PV generation data, but I hope this project can already provide useful insight into Malaysia’s solar energy potential.\nIf you would like to view the work, you can do so in the following links:\nEDA script: ERA5_Land_EDA Atlite fork: https://github.com/GohNgeeJuay/Atlite_ERA5_Land ",
+  "wordCount" : "1782",
+  "inLanguage": "en",
+  "datePublished": "2026-02-13T00:00:00Z",
+  "dateModified": "2026-02-13T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "Jake Goh"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://gohngeejuay.github.io/gohngeejuay/posts/atlite_era5_analysis/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Jake Goh – Renewable Energy Data Notes",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://gohngeejuay.github.io/gohngeejuay/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://gohngeejuay.github.io/gohngeejuay/" accesskey="h" title="Jake Goh – Renewable Energy Data Notes (Alt + H)">Jake Goh – Renewable Energy Data Notes</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Atlite with ERA5-Land
+    </h1>
+    <div class="post-meta"><span title='2026-02-13 00:00:00 +0000 UTC'>February 13, 2026</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>Jake Goh</span>
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#introduction" aria-label="Introduction">Introduction</a></li>
+                <li>
+                    <a href="#goals" aria-label="Goals">Goals</a></li>
+                <li>
+                    <a href="#design" aria-label="Design">Design</a></li>
+                <li>
+                    <a href="#procedure" aria-label="Procedure">Procedure</a><ul>
+                        
+                <li>
+                    <a href="#1-add-era5-land-as-a-new-dataset-option-in-atlite" aria-label="1. Add ERA5-Land as a new dataset option in Atlite">1. Add ERA5-Land as a new dataset option in Atlite</a></li>
+                <li>
+                    <a href="#2-make-era5-land-consistent-with-atlites-internal-conventions" aria-label="2. Make ERA5-Land consistent with Atlite’s internal conventions">2. Make ERA5-Land consistent with Atlite’s internal conventions</a></li>
+                <li>
+                    <a href="#3-check-what-the-pv-pipeline-needs-and-fill-in-missing-inputs" aria-label="3. Check what the PV pipeline needs and fill in missing inputs">3. Check what the PV pipeline needs and fill in missing inputs</a></li>
+                <li>
+                    <a href="#4-register-era5-land-so-it-becomes-selectable-in-atlite" aria-label="4. Register ERA5-Land so it becomes selectable in Atlite">4. Register ERA5-Land so it becomes selectable in Atlite</a></li>
+                <li>
+                    <a href="#5-run-an-end-to-end-pv-calculation-and-validate-the-results" aria-label="5. Run an end-to-end PV calculation and validate the results">5. Run an end-to-end PV calculation and validate the results</a></li></ul>
+                </li>
+                <li>
+                    <a href="#results" aria-label="Results">Results</a><ul>
+                        
+                <li>
+                    <a href="#1-does-the-new-dataset-improve-data-resolution" aria-label="1. Does the new dataset improve data resolution?">1. Does the new dataset improve data resolution?</a></li>
+                <li>
+                    <a href="#2-does-this-match-existing-analysis" aria-label="2. Does this match existing analysis?">2. Does this match existing analysis?</a></li>
+                <li>
+                    <a href="#3-which-states-in-malaysia-are-optimal-for-solar-farms" aria-label="3. Which states in Malaysia are optimal for solar farms?">3. Which states in Malaysia are optimal for solar farms?</a></li></ul>
+                </li>
+                <li>
+                    <a href="#future-work" aria-label="Future work">Future work</a></li>
+                <li>
+                    <a href="#conclusion-and-reflection" aria-label="Conclusion and Reflection">Conclusion and Reflection</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><h2 id="introduction">Introduction<a hidden class="anchor" aria-hidden="true" href="#introduction">#</a></h2>
+<p>In my previous blog post, I established why I was using ERA5-Land instead of the ERA5 dataset. This was because I wanted to get higher resolution in terms of PV potentials in Malaysia, which was lacking in existing datasets. The ERA5 dataset provides ~31 km grid resolution, which is already good, but I wanted to get even more granular data. Using the ERA5-Land dataset, it can provide detail up to ~9 km spatial resolution.</p>
+<p>However, this posed a challenge since <strong>Atlite requires solar irradiance inputs (especially Global Horizontal Irradiance, GHI, and the top-of-atmosphere solar radiation used for irradiance decomposition)</strong> for PV calculation. ERA5-Land does not provide the same set of irradiance variables that Atlite’s ERA5 workflow expects (such as direct solar radiation at the surface). Because of this, I had to calculate the <strong>Top of Atmosphere (TOA) solar influx</strong> manually to enable Atlite’s PV pipeline to work correctly. I spent time analysing and validating that the calculated TOA influx behaves as expected and is physically reasonable.</p>
+<p>This blog posts explains on a high-level what has been done to integrate the ERA5-Land dataset with Atlite, such that I can generate PV potential estimates for Malaysia using higher-resolution reanalysis data.</p>
+<hr>
+<h2 id="goals">Goals<a hidden class="anchor" aria-hidden="true" href="#goals">#</a></h2>
+<ol>
+<li>
+<p><strong>Integrate ERA5-Land into Atlite</strong></p>
+<ul>
+<li>
+<p>Context: Atlite already supports a few climate datasets such as ERA5, SARAH, and GEBCO, and provides a clean workflow for downloading, preparing, and converting climate data into renewable energy potential estimates.</p>
+</li>
+<li>
+<p>To extend Atlite so that ERA5-Land becomes a supported dataset option.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Use Atlite to generate PV potential in Malaysia</strong></p>
+<ul>
+<li>
+<p>After integration, use Atlite to generate PV potential across Malaysia at ERA5-Land’s higher spatial resolution (~9 km).</p>
+</li>
+<li>
+<p>To run this consistently across multiple years (2020–2025) to enable year-to-year comparison.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Analyse and validate the PV results</strong></p>
+<ul>
+<li>
+<p>To compare ERA5-Land outputs against Atlite’s existing ERA5 pipeline to confirm that the higher-resolution data produces more granular spatial patterns.</p>
+</li>
+<li>
+<p>To run sanity checks (ranges, spatial consistency, expected regional trends) to ensure the results are physically reasonable.</p>
+</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="design">Design<a hidden class="anchor" aria-hidden="true" href="#design">#</a></h2>
+<p><img alt="Design flowchart" loading="lazy" src="https://gohngeejuay.github.io/gohngeejuay/notebooks/atlite_era5_land_analysis/Design_flowchart.png"></p>
+<p>In this blog post, I will explain the Atlite integration using the previous data processing. Subsequently, use the newly supported dataset to make predictions of potential solar energy output.</p>
+<h2 id="procedure">Procedure<a hidden class="anchor" aria-hidden="true" href="#procedure">#</a></h2>
+<h3 id="1-add-era5-land-as-a-new-dataset-option-in-atlite">1. Add ERA5-Land as a new dataset option in Atlite<a hidden class="anchor" aria-hidden="true" href="#1-add-era5-land-as-a-new-dataset-option-in-atlite">#</a></h3>
+<p>I created a new dataset module specifically for ERA5-Land using Atlite’s existing ERA5 dataset module as a reference. I reused the same structure, functions and conventions to match the same interface as the ERA5 module. Atlite expects supported datasets to be able to implement certain functions such as download functions, data sanitisation functions and so on.</p>
+<p>The main goal is to ensure that my ERA5-Land module also implements the interface, and it behaves like another supported dataset inside Atlite. This means it should be able to download climate data, load it into Xarray, and return variables in the format Atlite expects.</p>
+<p> </p>
+<h3 id="2-make-era5-land-consistent-with-atlites-internal-conventions">2. Make ERA5-Land consistent with Atlite’s internal conventions<a hidden class="anchor" aria-hidden="true" href="#2-make-era5-land-consistent-with-atlites-internal-conventions">#</a></h3>
+<p>ERA5-Land variables follow ECMWF/CDS naming conventions such as <code>fdir</code>, <code>ssrd</code>, and <code>tisr</code>. Atlite, however, expects consistent internal names across all datasets. I needed to rename variables, convert units where necessary, and ensure the coordinates and dimensions match Atlite’s standards. This step is important because most of Atlite’s PV pipeline assumes these names and formats exist.</p>
+<p> </p>
+<h3 id="3-check-what-the-pv-pipeline-needs-and-fill-in-missing-inputs">3. Check what the PV pipeline needs and fill in missing inputs<a hidden class="anchor" aria-hidden="true" href="#3-check-what-the-pv-pipeline-needs-and-fill-in-missing-inputs">#</a></h3>
+<p>Atlite’s PV model needs two main types of climate inputs: <strong>solar radiation</strong> (to estimate how much sunlight reaches a solar panel) and <strong>temperature</strong> (to account for efficiency losses when panels heat up). ERA5-Land provides both <strong>surface solar radiation downwards</strong> (SSRD) and <strong>2m temperature</strong> (t2m), so at first glance it looks like we already have what we need.</p>
+<p>However, Atlite needs to know not just how much sunlight reaches the ground in total, but also how much of it comes as <strong>direct sun</strong> versus <strong>diffuse light</strong> (sunlight scattered by clouds and the atmosphere). With the standard ERA5 dataset, this split is easy because the dataset already includes both the total sunlight at the surface and the direct portion, so the diffuse portion can be derived as “total minus direct”. ERA5-Land does not provide the direct component, so I had to compute the missing top-of-atmosphere solar input and let Atlite’s built-in model estimate the direct vs diffuse split from there. This was done in the previous analysis and shown in the previous blog article.</p>
+<p>With this calculation, Atlite can now run its PV pipeline end-to-end using ERA5-Land even without the extra radiation variables that ERA5 provides.</p>
+<p> </p>
+<h3 id="4-register-era5-land-so-it-becomes-selectable-in-atlite">4. Register ERA5-Land so it becomes selectable in Atlite<a hidden class="anchor" aria-hidden="true" href="#4-register-era5-land-so-it-becomes-selectable-in-atlite">#</a></h3>
+<p>After the dataset module worked, I added it into Atlite’s dataset registry. Atlite keeps a record of all supported dataset in a file, and this step is what makes <code>Cutout(module=&quot;era5_land&quot;)</code> possible. Without this, the module exists in code but cannot be used through the normal Atlite workflow such as end-to-end PV estimation.</p>
+<p> </p>
+<h3 id="5-run-an-end-to-end-pv-calculation-and-validate-the-results">5. Run an end-to-end PV calculation and validate the results<a hidden class="anchor" aria-hidden="true" href="#5-run-an-end-to-end-pv-calculation-and-validate-the-results">#</a></h3>
+<p>Finally, I ran Atlite’s full PV pipeline using ERA5-Land cutouts for Malaysia. I verified that the workflow runs without manual fixes and produces reasonable results. This step creates a dataset with the PV potentials that I can use to perform analysis.</p>
+<hr>
+<h2 id="results">Results<a hidden class="anchor" aria-hidden="true" href="#results">#</a></h2>
+<h3 id="1-does-the-new-dataset-improve-data-resolution">1. Does the new dataset improve data resolution?<a hidden class="anchor" aria-hidden="true" href="#1-does-the-new-dataset-improve-data-resolution">#</a></h3>
+<p><img alt="Data resolution comparison" loading="lazy" src="https://gohngeejuay.github.io/gohngeejuay/notebooks/atlite_era5_land_analysis/Data_resolution.png"></p>
+<p>The difference in spatial resolution is immediately visible. The ERA5 result (left) looks blocky, with clear grid-like boundaries between neighbouring cells. In contrast, ERA5-Land (right) produces a much smoother surface with finer spatial detail.</p>
+<p>This achieves the primary objective behind the project: <strong>to produce higher-resolution PV estimates for Malaysia</strong>. With ERA5-Land’s smaller grid cells, the PV potential map becomes much more useful for real-world decision making. For example, it enables:</p>
+<ul>
+<li>
+<p>better identification of local PV hotspots</p>
+</li>
+<li>
+<p>more realistic comparisons between nearby regions</p>
+</li>
+<li>
+<p>improved state-level and district-level analysis</p>
+</li>
+<li>
+<p>stronger inputs for site screening and feasibility studies</p>
+</li>
+</ul>
+<p> </p>
+<h3 id="2-does-this-match-existing-analysis">2. Does this match existing analysis?<a hidden class="anchor" aria-hidden="true" href="#2-does-this-match-existing-analysis">#</a></h3>
+<p>As a quick sanity check, the PV yields produced by Atlite fall within a realistic range. If we take the annual PV prediction (in <strong>kWh/kWp/year</strong>) and convert it into an average daily yield, we get:</p>
+<ul>
+<li>
+<p><strong>1250 kWh/kWp/year → ~3.4 kWh/kWp/day</strong></p>
+</li>
+<li>
+<p><strong>1500 kWh/kWp/year → ~4.1 kWh/kWp/day</strong></p>
+</li>
+</ul>
+<p>These values are reasonable for Malaysia’s tropical climate, where solar resources are generally strong but moderated by frequent cloud cover and seasonal rainfall.</p>
+<p>To validate this further, I cross-referenced the results against an independent source ( <a href="https://www.solarsunyield.com/latestnews/nid/167598/">https://www.solarsunyield.com/latestnews/nid/167598/</a>) summarising PV yield trends across Malaysia. The reported daily and yearly yields fall within the same range, and the regional patterns are consistent with what my results have shown, with northern and central regions generally performing better than the southern peninsula and East Malaysia.</p>
+<p>This source also uses the <strong>Global Solar Atlas</strong>, which provides a global summary of PV potential. While the <strong>Global Solar Atlas</strong> uses its own modelling assumptions and input datasets, the overall magnitude and geographical trends align well with my output, giving additional confidence that the ERA5-Land integration with Atlite is producing sensible PV estimates.</p>
+<p><img alt="Data resolution comparison" loading="lazy" src="https://gohngeejuay.github.io/gohngeejuay/notebooks/atlite_era5_land_analysis/Solar_sun_yield_website.png"></p>
+<p>My map:
+<img alt="Average yearly yield" loading="lazy" src="https://gohngeejuay.github.io/gohngeejuay/notebooks/atlite_era5_land_analysis/Average_yearly_yield.png"></p>
+<p>As you can see the values from my PV prediction aligns with the geographical trends and the daily trends from the referenced sources.</p>
+<p> </p>
+<h3 id="3-which-states-in-malaysia-are-optimal-for-solar-farms">3. Which states in Malaysia are optimal for solar farms?<a hidden class="anchor" aria-hidden="true" href="#3-which-states-in-malaysia-are-optimal-for-solar-farms">#</a></h3>
+<p><img alt="PV by state" loading="lazy" src="https://gohngeejuay.github.io/gohngeejuay/notebooks/atlite_era5_land_analysis/PV_by_state.png"></p>
+<p>This chart shows the <strong>average annual PV yield</strong> in each state, measured in <strong>kWh/kWp</strong> (which means <em>the amount of kWh of electricity you can generate in a year for every 1 kW of solar panel installed</em>). The kWp is the maximum theoretical output that can be produced under ideal test conditions (1000 W/m squared solar radiation, 25 degrees Celsius), which is very much different from actual real-life implementation.</p>
+<p>To make the results easier to interpret, I aggregated the PV estimates by state and compared the average yearly yield across each state.</p>
+<p>Based on the bar chart above (sorted by yearly mean PV yield), the northern states such as <strong>Perlis, Pulau Pinang, and Kedah</strong> consistently rank among the highest. Central regions such as <strong>Selangor, Putrajaya, Kuala Lumpur, and Melaka</strong> also show strong PV potential.</p>
+<p>On the other end of the spectrum, <strong>Johor and Sarawak</strong> have the lowest predicted PV yield, which may reflect regional differences in cloud cover and rainfall patterns.</p>
+<p>Overall, most states fall within a relatively narrow band of roughly <strong>1300 to 1500 kWh/kWp per year</strong>. For context, this is generally higher than many parts of Europe (where values around ~900–1200 kWh/kWp/year are common), and is comparable to strong solar regions such as parts of Southern Europe, Australia, and the southwestern United States. This reinforces that Malaysia has broadly strong solar conditions.</p>
+<hr>
+<h2 id="future-work">Future work<a hidden class="anchor" aria-hidden="true" href="#future-work">#</a></h2>
+<p>Here are some limitations of the analysis:</p>
+<ol>
+<li>
+<p>The results above show how much energy (in kWh) could be generated in a year if we assume <strong>1 kW of installed PV capacity in every grid cell</strong>. In other words, this is a <em>resource potential map</em>. It describes how good the solar conditions are, but it does not assume how much solar capacity is actually built today. Because of this, we cannot draw conclusions about the performance of Malaysia’s existing solar farms, or how closely current deployment aligns with the highest-potential regions.</p>
+</li>
+<li>
+<p>Also, many areas are not feasible for large-scale PV deployment. Some locations may be constrained by land use and zoning rules, dense urban development, steep terrain, protected forests, wetlands, or simply lack of grid access. These constraints mean that high potential does not automatically translate into buildable capacity.</p>
+</li>
+</ol>
+<p>For future work, I plan to extend the analysis into these directions:</p>
+<ol>
+<li>Firstly, I want to <strong>introduce land-use and feasibility filtering</strong> so that the results focus on areas where PV is realistically buildable.</li>
+<li>Secondly, I want to <strong>incorporate datasets that describe where solar farms have already been built</strong> so that the PV estimates can be linked to real deployment patterns.</li>
+<li>If possible, I also want to <strong>obtain historical electricity generation data</strong>, so that the Atlite results can be cross-validated against real-world output.</li>
+</ol>
+<p>These additions would make the model more grounded and provide significantly more confidence in the PV estimates.</p>
+<p>I may also open a PR to contribute this ERA5-Land integration back into Atlite. Before doing so, I want to spend more time aligning the implementation with Atlite’s conventions, improving test coverage, and documenting the dataset assumptions. Depending on the scope expected by the maintainers, I may also extend the module beyond PV to support additional features such as wind-related variables.</p>
+<hr>
+<h2 id="conclusion-and-reflection">Conclusion and Reflection<a hidden class="anchor" aria-hidden="true" href="#conclusion-and-reflection">#</a></h2>
+<p>This project is a rewarding culmination of several months of work, and I’m glad to have achieved my main goal of producing a high-resolution PV estimate for Malaysia.</p>
+<p>Further work will determine how well these estimates hold up against real-world deployment and PV generation data, but I hope this project can already provide useful insight into Malaysia’s solar energy potential.</p>
+<p>If you would like to view the work, you can do so in the following links:</p>
+<ol>
+<li>EDA script: <a href="https://gohngeejuay.github.io/gohngeejuay/notebooks/atlite_era5_land_analysis/era5_land_EDA.html">ERA5_Land_EDA</a></li>
+<li>Atlite fork: <a href="https://github.com/GohNgeeJuay/Atlite_ERA5_Land">https://github.com/GohNgeeJuay/Atlite_ERA5_Land</a></li>
+</ol>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="https://gohngeejuay.github.io/gohngeejuay/">Jake Goh – Renewable Energy Data Notes</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

@@ -6,8 +6,15 @@
     <description>Recent content in Posts on Jake Goh – Renewable Energy Data Notes</description>
     <generator>Hugo -- 0.152.1</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 12 Dec 2025 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 13 Feb 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://gohngeejuay.github.io/gohngeejuay/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Atlite with ERA5-Land</title>
+      <link>https://gohngeejuay.github.io/gohngeejuay/posts/atlite_era5_analysis/</link>
+      <pubDate>Fri, 13 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>https://gohngeejuay.github.io/gohngeejuay/posts/atlite_era5_analysis/</guid>
+      <description>Using Atlite with higher resolution ERA5-Land dataset</description>
+    </item>
     <item>
       <title>Deep Dive into solar energy modelling</title>
       <link>https://gohngeejuay.github.io/gohngeejuay/posts/solar_toa_influx_analysis/</link>
