@@ -8,7 +8,7 @@ tocOpen: false
 draft: false
 ---
 
-## Introduction: 
+## Introduction
 
 
 One of the reasons I’m fascinated by data is its ability to illuminate the natural world and help us understand complex, real-world phenomena. Renewable energy is one of those domains where data is not just interesting, it can help us understand abstract environment variables and gives us insight that can shape our decisions for the future. 
@@ -376,7 +376,7 @@ This workflow will help to bridge the gap between climate datasets and practical
 # Resources
 
 If you would like to view the jupyter notebook output, you can view them here:
-1. Download script: [TOA_influx](/notebooks/solar_toa_influx_analysis/download_data.html)
+1. Download script: [Download_data](/notebooks/solar_toa_influx_analysis/download_data.html)
 2. EDA script: [TOA_influx](/notebooks/solar_toa_influx_analysis/toa_influx.html)
 
 To view the full code including the data, notebooks, functions and tests, click here: https://github.com/GohNgeeJuay/TOA_Influx_Analysis. 
