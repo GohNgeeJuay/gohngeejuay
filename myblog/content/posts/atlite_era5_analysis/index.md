@@ -94,8 +94,9 @@ Finally, I ran Atlite’s full PV pipeline using ERA5-Land cutouts for Malaysia.
 
 ### 1. Does the new dataset improve data resolution?
 
+<img src="/notebooks/atlite_era5_land_analysis/Data_resolution.png" width="1000px" height="300px" alt="Alt text for the image" />
 
-![Data resolution comparison](/notebooks/atlite_era5_land_analysis/Data_resolution.png)
+*Note: You might need to open the image in another tab to see it clearly.*
 
 The difference in spatial resolution is immediately visible. The ERA5 result (left) looks blocky, with clear grid-like boundaries between neighbouring cells. In contrast, ERA5-Land (right) produces a much smoother surface with finer spatial detail.
 

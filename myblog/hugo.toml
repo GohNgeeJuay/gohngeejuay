@@ -17,4 +17,9 @@ canonifyURLs = true
     Title = "Renewable Energy Analysis"
     Content = "I write about what I learn while working at the intersection of renewable energy and data. This blog documents my experiments, insights, and ongoing journey in sustainability analytics."
 
+  [markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
 
