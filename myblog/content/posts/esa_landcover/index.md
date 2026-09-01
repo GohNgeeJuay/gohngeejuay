@@ -106,3 +106,5 @@ You can view the script and the dashboard code in the following links:
 1. Data processing script: [script](/notebooks/esa_landcover/ESA_WorldCover_processing.html)
 2. PV Dashboard: https://github.com/GohNgeeJuay/pv-potential-dashboard
 
+**To view the dashboard**, use [this link](https://pv-potential-dashboard-amqkpmvgztmawtky2m4pri.streamlit.app/)
+
