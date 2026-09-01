@@ -102,3 +102,7 @@ In this update, I added land-cover information to provide more context when eval
 
 In the future, I will focus on making the ETL process more extensible and automated, and also looking to improve the UI elements and user experience. 
 
+You can view the script and the dashboard code in the following links:
+1. Data processing script: [script](/notebooks/esa_landcover/ESA_WorldCover_processing.html)
+2. PV Dashboard: https://github.com/GohNgeeJuay/pv-potential-dashboard
+
